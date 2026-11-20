@@ -53,6 +53,12 @@ story_prompt = st.text_area(
     placeholder="A girl finds a lost baby fox in the forest during a storm...",
     height=100,
 )
+# "Auto" lets the LLM choose the style that fits the story
+style_choice = st.selectbox(
+    "Visual style",
+    ["Auto"] + scenes.STYLES,
+    format_func=lambda s: s.replace("_", " ").capitalize(),
+)
 generate = st.button("Generate video", type="primary")
 
 # ---------------------------------------------------------------------------
@@ -77,11 +83,14 @@ if generate:
         # Step 1: story -> scenes (LLM)
         progress.progress(5, text="1/4 Writing scenes with Llama 3.1...")
         t = time.time()
-        story = scenes.generate_scenes(story_prompt)
+        forced_style = None if style_choice == "Auto" else style_choice
+        story = scenes.generate_scenes(story_prompt, style=forced_style)
         scenes.save_scenes(story)
         scenes.unload_model()  # free RAM before loading the image model
         timings["Scenes"] = time.time() - t
         st.write(f"✅ Wrote {len(story.scenes)} scenes ({timings['Scenes']:.0f}s)")
+        st.write(f"🎨 Style: {story.style} · 🧑 Character: {story.character} "
+                 f"· 📍 Setting: {story.setting} · 🎙️ Voice: {story.narrator}")
 
         # Step 2: scenes -> images (SDXL Turbo)
         progress.progress(30, text="2/4 Painting images with SDXL Turbo...")
@@ -123,12 +132,15 @@ if st.session_state.get("has_video") and assemble.VIDEO_FILE.exists():
 
     # Storyboard gallery: one card per scene (image + narration + prompt)
     st.subheader("Storyboard")
-    story_scenes = json.loads(scenes.OUTPUT_FILE.read_text())["scenes"]
+    story_data = json.loads(scenes.OUTPUT_FILE.read_text())
+    st.caption(f"Style: {story_data['style']} · Character: {story_data['character']} "
+               f"· Setting: {story_data['setting']}")
     columns = st.columns(2)
-    for i, scene in enumerate(story_scenes):
+    for i, scene in enumerate(story_data["scenes"]):
         n = scene["scene_number"]
         with columns[i % 2]:  # alternate between the 2 columns
             st.image(str(images.IMAGES_DIR / f"scene_{n}.png"))
             st.markdown(f"**Scene {n}.** *{scene['narration']}*")
             with st.expander("Image prompt"):
-                st.write(scene["image_prompt"])
+                # Show the full prompt the image model actually received
+                st.write(images.build_prompt(story_data, scene))

@@ -25,14 +25,18 @@ import edge_tts
 SCENES_FILE = Path("output/scenes.json")
 AUDIO_DIR = Path("output/audio")
 
-VOICE = "en-US-AriaNeural"  # a warm storytelling voice
-RATE = "-10%"               # 10% slower than normal = calmer narration
+# The LLM picks "female" or "male" for each story (the "narrator" field)
+VOICES = {
+    "female": "en-US-AriaNeural",  # warm, storytelling
+    "male": "en-US-GuyNeural",     # clear, news/novel style
+}
+RATE = "-5%"  # slightly slower than normal = calmer narration
 
 
-async def make_clip(text: str, path: Path) -> None:
+async def make_clip(text: str, voice: str, path: Path) -> None:
     """Turn one line of text into an MP3 file."""
     # Communicate = one request to the TTS service with our text + voice
-    communicate = edge_tts.Communicate(text, voice=VOICE, rate=RATE)
+    communicate = edge_tts.Communicate(text, voice=voice, rate=RATE)
     await communicate.save(str(path))  # download the audio to a file
 
 
@@ -51,17 +55,19 @@ def audio_length(path: Path) -> float:
 
 
 async def generate_voiceover() -> None:
-    # 1. Read the scenes made in step 1
-    scenes = json.loads(SCENES_FILE.read_text())["scenes"]
+    # 1. Read the storyboard made in step 1, and pick the voice
+    story = json.loads(SCENES_FILE.read_text())
+    voice = VOICES[story.get("narrator", "female")]
     AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+    print(f"Voice: {voice}")
 
     # 2. One audio clip per scene
     total = 0.0
-    for scene in scenes:
+    for scene in story["scenes"]:
         number = scene["scene_number"]
         path = AUDIO_DIR / f"scene_{number}.mp3"
 
-        await make_clip(scene["narration"], path)
+        await make_clip(scene["narration"], voice, path)
 
         seconds = audio_length(path)
         total += seconds

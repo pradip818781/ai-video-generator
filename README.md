@@ -71,9 +71,9 @@ HF_HUB_OFFLINE=1 .venv/bin/python images.py     # → output/images/scene_N.png
 
 | File | What it does |
 |---|---|
-| `scenes.py` | Sends the story to Ollama with a JSON schema, validates the reply with Pydantic (retries up to 3 times), and adds a fixed character description to every image prompt |
-| `images.py` | Generates one 512×512 image per scene with SDXL Turbo on the Apple GPU (MPS): 4 steps, fixed seed, fixed art style |
-| `voice.py` | Turns each narration line into speech (Edge TTS, `en-US-AriaNeural`) and measures clip lengths with ffprobe |
+| `scenes.py` | Sends the story to Ollama with a JSON schema and gets a storyboard: character, setting, style, narrator voice and 3–4 scenes. Validates with Pydantic and retries up to 3 times. `--style` forces a style |
+| `images.py` | Generates one 512×512 image per scene with SDXL Turbo on the Apple GPU (MPS): 4 steps, same seed, prompt = style + character + setting + action |
+| `voice.py` | Turns each narration line into speech with Edge TTS (`en-US-AriaNeural` or `en-US-GuyNeural`, per story) and measures clip lengths with ffprobe |
 | `assemble.py` | Uses FFmpeg to make one clip per scene (Ken Burns zoom + narration with pauses), then joins them with crossfades |
 | `app.py` | Streamlit UI: runs steps 1–4, shows progress, plays the video, offers a download, and shows the storyboard |
 | `requirements.txt` | Python packages |
@@ -85,9 +85,11 @@ HF_HUB_OFFLINE=1 .venv/bin/python images.py     # → output/images/scene_N.png
 ## How it stays consistent
 
 - **Structured output:** Ollama's `format` option takes a JSON Schema, so the LLM can only reply in that shape. Pydantic double-checks it.
-- **Fixed character:** code (not the LLM) adds the same character description to every image prompt, so the wording never drifts.
-- **Fixed style + seed:** one art-style phrase goes at the front of every prompt, and the same random seed is used for each scene. This fixed v1's mix of photo and cartoon images.
-- **Prompt budget:** SDXL reads only 77 tokens, so style comes first and the character description is kept short (prompts are 65–68 tokens).
+- **Story-aware design:** for each story the LLM designs one **character** (age, gender, a waist-up outfit in at most 2 colours) and one **setting**, picks a **style** (photorealistic, cinematic, storybook, 3D animation or anime) and a **narrator voice** (female or male). A teenage boy's weather report gets a teenage boy in a TV studio, photorealistic, with a male voice; a fairy tale gets a storybook look.
+- **Reused in every scene:** code (not the LLM) builds every image prompt as *style + character + setting + scene action*, so the same wording appears every time and the person and place stay consistent.
+- **Same seed:** each scene starts from the same random noise, which also helps consistency.
+- **Style override:** the web app has a style dropdown; "Auto" lets the LLM choose.
+- **Prompt budget:** SDXL reads only 77 tokens, so the most important parts come first and each scene's action is kept under 20 words (prompts are about 60–70 tokens; `images.py` warns if one is too long).
 - **Memory:** the LLM is unloaded (`keep_alive: 0`) before the image model loads, so both never share 16 GB at once.
 
 ---
@@ -139,7 +141,8 @@ Sources: [Claude pricing](https://platform.claude.com/docs/en/about-claude/prici
 
 ## Known limitations
 
-- Small details can be missed or changed: the paper boat barely appeared in one story, and boots switched to red in one scene.
+- Faces and small details can drift between scenes when the character description is vague (e.g. a beard or hat appearing in some scenes). Text-only consistency has limits; a reference-image method (IP-Adapter) is on the roadmap.
+- The 8B LLM sometimes reuses the format examples in its instructions (e.g. a setting) when they happen to fit the story.
 - Mood words like "storm" are often ignored by the 4-step Turbo model.
 - Occasional glitches, such as a stray fox tail. Changing `SEED` in `images.py` usually fixes them.
 - Single-user for now: everyone shares one output folder, so two simultaneous generations would overwrite each other (per-user jobs are on the [roadmap](ROADMAP.md)).

@@ -11,7 +11,13 @@ AI Video Generator turns a one-line story into a narrated, illustrated short vid
 - **Web UI:** a Streamlit app with a prompt box, live progress, a video player, download and a storyboard view.
 - **Cost model:** about 1 minute per video locally; about $0.01–0.03 per video on cloud APIs (see README).
 
+## Shipped (v1.1)
+
+- **Story-aware visuals:** the LLM designs the character, setting, style and narrator voice for each story (no more one fixed character); style dropdown in the UI.
+
 ## Next (v1.x)
+
+- [ ] **Face consistency:** generate one character reference image, then use IP-Adapter so every scene shows the same face
 
 - [ ] **Vertical output:** 1080×1920 for YouTube Shorts, Instagram Reels and TikTok
 - [ ] **Subtitles:** burned-in captions generated from the narration

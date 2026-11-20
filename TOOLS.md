@@ -96,6 +96,16 @@ This file is updated as each step adds new tools.
 
 ---
 
+### Story-aware prompt building (v1.1)
+- **Technical:** the LLM's JSON includes `character`, `setting`, `style` (an enum of 5 presets) and `narrator`. `images.py` maps the style name to tested keywords (`STYLE_PROMPTS`) and builds each prompt as style + character + setting + scene action. The constant parts are identical across scenes; only the action changes.
+- **In plain words:** the AI first fills in a "casting sheet" (who, where, what look, which voice), then every picture is ordered with the same casting sheet stapled on top, so the person and place don't change.
+
+### Example copying (few-shot leakage)
+- **Technical:** small LLMs tend to copy the examples in their instructions word for word. Mitigations: give 2+ deliberately different examples, label them "format only, never copy", and test with unrelated inputs.
+- **In plain words:** if you show a student one sample answer, they may hand it back unchanged. Show several different ones and say "just follow the format".
+
+---
+
 ## Step 3: Narration → voice (`voice.py`)
 
 ### Edge TTS (`edge-tts`)
