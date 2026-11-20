@@ -1,0 +1,13 @@
+# Python environment and caches
+.venv/
+__pycache__/
+*.pyc
+
+# Generated files (recreated on every run)
+output/
+
+# Private notes (kept on this Mac only)
+PLAN.md
+
+# macOS
+.DS_Store

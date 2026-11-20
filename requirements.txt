@@ -1,0 +1,13 @@
+requests>=2.32
+pydantic>=2.9
+# Step 2: image generation
+torch>=2.5
+diffusers>=0.31
+transformers>=4.46
+accelerate>=1.0
+
+# Step 3: voiceover
+edge-tts>=7.0
+
+# Step 5: web UI
+streamlit>=1.40
