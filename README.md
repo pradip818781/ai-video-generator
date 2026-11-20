@@ -15,7 +15,14 @@ Type a one-line story and get a narrated, illustrated short video, generated **e
 
 **Result:** a ~15–22 second 1024×1024 MP4 in **about 1 minute**, with **$0 in API costs**.
 
-**Sample output:** [watch the sample video](docs/sample.mp4) ("A girl builds a paper boat and sails it down a rainy street to find where the river goes.")
+### Sample output
+A family's hike to a mountain summit, generated from a one-line prompt (preview below has no sound):
+
+![Animated preview of a generated video](docs/preview.gif)
+
+▶️ **[Download the full video with narration (MP4, 4.4 MB)](https://github.com/pradip818781/ai-video-generator/raw/main/docs/sample.mp4)**
+
+The four generated scenes:
 
 ![Storyboard: four generated scenes](docs/storyboard.png)
 
